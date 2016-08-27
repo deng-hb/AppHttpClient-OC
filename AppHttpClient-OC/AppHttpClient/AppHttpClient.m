@@ -56,7 +56,7 @@ static AppHttpClient *_instance;
     
     [request setValue:@"denghb" forHTTPHeaderField:@"User-Agent"];// TODO 可自定义
     [request setValue:@"denghb" forHTTPHeaderField:@"Xxx"];// TODO 可自定义
-    [request setValue:@"https://www.baidu.com/" forHTTPHeaderField:@"Referer"];
+    [request setValue:@"https://denghb.com/" forHTTPHeaderField:@"Referer"];
     // POST 请求
     if(method && [@"POST" isEqualToString:method]){
         request.HTTPMethod = @"POST";
