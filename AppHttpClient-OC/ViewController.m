@@ -66,7 +66,8 @@
     switch (indexPath.row) {
         case 0:
         {
-            [AppHttpClient get:@"http://192.168.1.8:8090/" completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            AppHttpClient *clinet = [[AppHttpClient alloc]init];
+            [clinet get:@"http://192.168.1.8:8090/" completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                 
                 NSString *res = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
                 NSError *err;
@@ -87,7 +88,8 @@
             NSDictionary *dict = @{@"amount":@"123"};
             
             NSString *api = @"http://192.168.1.8:8090/post";
-            [AppHttpClient post:api parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            AppHttpClient *clinet = [[AppHttpClient alloc]init];
+            [clinet post:api parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                 NSString *body = [[NSString alloc]initWithData:data encoding:(NSUTF8StringEncoding)];
                 NSLog(@"%@",body);
                 
@@ -105,7 +107,8 @@
             NSDictionary *dict = @{@"amount":@"123",@"images":@{KfileName:@"截屏",KfileData:data}};
             
             NSString *api = @"http://192.168.1.8:8090/upload";
-            [AppHttpClient post:api parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            AppHttpClient *clinet = [[AppHttpClient alloc]init];
+            [clinet post:api parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                 NSString *body = [[NSString alloc]initWithData:data encoding:(NSUTF8StringEncoding)];
                 NSLog(@"%@",body);
                 
@@ -123,7 +126,8 @@
             NSDictionary *dict = @{@"amount":@"123",@"images":@[@{KfileName:@"截屏1",KfileData:data},@{KfileName:@"截屏2",KfileData:data}]};
             
             NSString *api = @"http://192.168.1.8:8090/upload";
-            [AppHttpClient post:api parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            AppHttpClient *clinet = [[AppHttpClient alloc]init];
+            [clinet post:api parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                 NSString *body = [[NSString alloc]initWithData:data encoding:(NSUTF8StringEncoding)];
                 NSLog(@"%@",body);
                 
@@ -139,7 +143,7 @@
             [clinet download:@"http://hbimg.b0.upaiyun.com/84194f2a3c400baea28c6e02e3a70c2918ad81d71327d-WBrvU5"
                       saveAs:@"images/1.jpg"
                     progress:^(double progress) {
-                        
+                        NSLog(@"%2f",progress);
                     } completionHandler:^(NSError *error) {
                         
                         if(error){

@@ -13,6 +13,7 @@ NSString * const KfileData = @"file_data";
 
 @interface AppHttpClient ()<NSURLSessionDownloadDelegate>
 {
+    NSString *_docPath;
     DownloadProgress _downloadProgress;
     DownloadCompletion _downloadCompletion;
 }
@@ -20,35 +21,21 @@ NSString * const KfileData = @"file_data";
 
 @implementation AppHttpClient
 
-+ (NSURLSession *)urlSession
-{
-    
-    NSURLSession *urlSession = [NSURLSession sharedSession];
-    if (!urlSession) {
-        NSURLSessionConfiguration *cfg = [NSURLSessionConfiguration defaultSessionConfiguration];
-        // TODO
-        // 设置超时时长
-        cfg.timeoutIntervalForRequest = 10;
-        // 是否允许使用蜂窝网络（手机自带网络）
-        cfg.allowsCellularAccess = YES;
-        urlSession = [NSURLSession sessionWithConfiguration:cfg];
-    }
-    return urlSession;
-}
-
 /**
- * 暂时只支持GET、POST   多线程下有问题
+ * 暂时只支持GET、POST
  */
-+ (NSMutableURLRequest *)requestWithUrl:(NSString *)urlString parameters:(NSDictionary *)parameters method:(NSString *)method
+- (NSMutableURLRequest *)requestWithUrl:(NSString *)urlString parameters:(NSDictionary *)parameters method:(NSString *)method
 {
+    NSAssert(nil != urlString, @"url not nil");
     // 编码
     NSString *urlEncode = [urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-    NSURL *url = [NSURL URLWithString:urlEncode];
-    NSMutableURLRequest *request = [[NSMutableURLRequest alloc]initWithURL:url];
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc]initWithURL:[NSURL URLWithString:urlEncode]];
+    [request setTimeoutInterval:30*10000];// 请求超时时长
+    
     
     [request setValue:@"denghb" forHTTPHeaderField:@"User-Agent"];// TODO 可自定义
     [request setValue:@"denghb" forHTTPHeaderField:@"Xxx"];// TODO 可自定义
-    [request setValue:@"https://denghb.com/" forHTTPHeaderField:@"Referer"];
+    [request setValue:@"https://huaban.com/" forHTTPHeaderField:@"Referer"];
     // POST 请求
     if(method && [@"POST" isEqualToString:method]){
         request.HTTPMethod = @"POST";
@@ -122,7 +109,7 @@ NSString * const KfileData = @"file_data";
 /**
  * 文件流拼接
  */
-+ (void)fileAppendWith:(NSDictionary *)dict bodyData:(NSMutableData *) bodyData boundary:(NSString *) boundary name:(NSString *)name
+- (void)fileAppendWith:(NSDictionary *)dict bodyData:(NSMutableData *) bodyData boundary:(NSString *) boundary name:(NSString *)name
 {
     
     NSData *filedata = dict[KfileData];
@@ -140,20 +127,20 @@ NSString * const KfileData = @"file_data";
     [bodyData appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
-+ (void)get:(NSString *)url completionHandler:(void (^)(NSData * data, NSURLResponse * response, NSError * error)) handler;
+- (void)get:(NSString *)url completionHandler:(void (^)(NSData * data, NSURLResponse * response, NSError * error)) handler;
 {
     
     NSMutableURLRequest *request = [self requestWithUrl:url parameters:nil method:@"GET"];
-    NSURLSession *urlSession = [self urlSession];
-    __block NSURLSessionDataTask *task = [urlSession dataTaskWithRequest:request completionHandler:handler];
+    NSURLSession *session = [NSURLSession sharedSession];
+    NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:handler];
     [task resume];
 }
 
-+ (void)post:(NSString *)url parameters:(NSDictionary *)parameters completionHandler:(void (^)(NSData * data, NSURLResponse * response, NSError * error)) handler;
+- (void)post:(NSString *)url parameters:(NSDictionary *)parameters completionHandler:(void (^)(NSData * data, NSURLResponse * response, NSError * error)) handler;
 {
     NSMutableURLRequest *request = [self requestWithUrl:url parameters:parameters method:@"POST"];
-    NSURLSession *urlSession = [self urlSession];
-    __block NSURLSessionDataTask *task = [urlSession dataTaskWithRequest:request completionHandler:handler];
+    NSURLSession *session = [NSURLSession sharedSession];
+    NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:handler];
     
     [task resume];
 }
@@ -161,18 +148,21 @@ NSString * const KfileData = @"file_data";
 
 - (void)download:(NSString *) url saveAs:(NSString *) docPath progress:(DownloadProgress) progress completionHandler:(DownloadCompletion) handler
 {
+    NSAssert(nil != docPath, @"docPath not nil");
+
+    _docPath = docPath;
     _downloadProgress = progress;
     _downloadCompletion = handler;
     
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
-    __block NSURLSessionDownloadTask *task = [[NSURLSession sharedSession] downloadTaskWithRequest:request completionHandler:^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-        
-        // 报错就返回
-        if(error){
-            handler(error);
-        }
-    }];
+    NSMutableURLRequest *request = [self requestWithUrl:url parameters:nil method:@"GET"];
     
+    NSURLSessionConfiguration* sessionConfig = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:@"AppHttpClinet-download"];
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfig
+                                                          delegate:self
+                                                     delegateQueue:[NSOperationQueue mainQueue]];
+    
+    NSURLSessionDownloadTask *task = [session downloadTaskWithRequest:request];
+
     [task resume];
 }
 
@@ -182,5 +172,41 @@ NSString * const KfileData = @"file_data";
 - (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location
 {
     
+    // app 目录
+    NSString *doc = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+
+    // 另存下载来的文件
+    NSString *path = [doc stringByAppendingPathComponent:_docPath];
+    
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    // 判断文件夹是否存在，如果不存在，则创建
+    if (![fileManager fileExistsAtPath:path]) {
+        [fileManager createDirectoryAtPath:path withIntermediateDirectories:NO attributes:nil error:nil];
+    }
+    
+    // 存在文件就删除
+    if([fileManager fileExistsAtPath:path]){
+        [fileManager removeItemAtPath:path error:nil];
+    }
+    
+    // 移动至指定目录
+    [fileManager moveItemAtPath:location.path toPath:path error:nil];
 }
+
+- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didWriteData:(int64_t)bytesWritten totalBytesWritten:(int64_t)totalBytesWritten totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite
+{
+    // 下载中
+    if(_downloadProgress){
+        _downloadProgress(totalBytesWritten*100.0/totalBytesExpectedToWrite);
+    }
+}
+
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(nullable NSError *)error
+{
+    // 下载完成
+    if(_downloadCompletion){
+        _downloadCompletion(error);
+    }
+}
+
 @end
