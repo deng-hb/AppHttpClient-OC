@@ -25,8 +25,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
-    
-    _array = @[@"Method GET",@"Method POST",@"Upload",@"Uploads",@"Download"];
+    [self setTitle:@"Example"];
+    _array = @[@"GET",@"POST",@"Upload",@"Uploads",@"Download"];
     
     _tableView = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, mScreenWidth, mScreenHeight)];
     [_tableView setDataSource:self];
@@ -63,19 +63,31 @@
     NSLog(@"click %ld",(long)indexPath.row);
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 
+    __weak typeof(self) weakSelf = self;
     switch (indexPath.row) {
         case 0:
         {
             AppHttpClient *clinet = [[AppHttpClient alloc]init];
             [clinet get:@"http://192.168.1.8:8090/" completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+                if(error){
+                    [weakSelf setTitle:[NSString stringWithFormat:@"GET %@",error.localizedDescription]];
+                    NSLog(@"%@",error);
+                }else{
+                    [weakSelf setTitle:@"GET SUCCESS"];
+                }
                 
-                NSString *res = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
-                NSError *err;
-                NSLog(@"%@",res);
-                // 转JSON
-                [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&err];
-                if (err) {
-                    NSLog(@"JSON ERR:%@", [err localizedDescription]);
+                NSHTTPURLResponse *res = (NSHTTPURLResponse *)response;
+                
+                if(200 == res.statusCode && nil != data){
+                    
+                    NSString *res = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
+                    NSError *err;
+                    NSLog(@"%@",res);
+                    // 转JSON
+                    [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&err];
+                    if (err) {
+                        NSLog(@"JSON ERR:%@", [err localizedDescription]);
+                    }
                 }
             }];
             
@@ -94,7 +106,10 @@
                 NSLog(@"%@",body);
                 
                 if(error){
+                    [weakSelf setTitle:[NSString stringWithFormat:@"POST %@",error.localizedDescription]];
                     NSLog(@"%@",error);
+                }else{
+                    [weakSelf setTitle:@"POST SUCCESS"];
                 }
             }];
             break;
@@ -113,7 +128,10 @@
                 NSLog(@"%@",body);
                 
                 if(error){
+                    [weakSelf setTitle:[NSString stringWithFormat:@"Upload %@",error.localizedDescription]];
                     NSLog(@"%@",error);
+                }else{
+                    [weakSelf setTitle:@"Upload SUCCESS"];
                 }
             }];
             break;
@@ -132,7 +150,10 @@
                 NSLog(@"%@",body);
                 
                 if(error){
+                    [weakSelf setTitle:[NSString stringWithFormat:@"Uploads %@",error.localizedDescription]];
                     NSLog(@"%@",error);
+                }else{
+                    [weakSelf setTitle:@"Uploads SUCCESS"];
                 }
             }];
             break;
@@ -143,13 +164,14 @@
             [clinet download:@"http://hbimg.b0.upaiyun.com/84194f2a3c400baea28c6e02e3a70c2918ad81d71327d-WBrvU5"
                       saveAs:@"images/1.jpg"
                     progress:^(double progress) {
-                        NSLog(@"%2f",progress);
+                        NSLog(@"%@",[NSString stringWithFormat:@"Download %.2f%%",progress]);
                     } completionHandler:^(NSError *error) {
                         
                         if(error){
+                            [weakSelf setTitle:[NSString stringWithFormat:@"Download %@",error.localizedDescription]];
                             NSLog(@"%@",error);
                         }else{
-                            NSLog(@"download success");
+                            [weakSelf setTitle:@"Download SUCCESS"];
                         }
                     }];
         }

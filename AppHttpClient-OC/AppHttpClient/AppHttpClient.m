@@ -21,6 +21,51 @@ NSString * const KfileData = @"file_data";
 
 @implementation AppHttpClient
 
+- (void)get:(NSString *)url completionHandler:(void (^)(NSData * data, NSURLResponse * response, NSError * error)) handler;
+{
+    
+    NSMutableURLRequest *request = [self requestWithUrl:url parameters:nil method:@"GET"];
+    NSURLSessionDataTask *task = [[self session] dataTaskWithRequest:request completionHandler:handler];
+    [task resume];
+}
+
+- (void)post:(NSString *)url parameters:(NSDictionary *)parameters completionHandler:(void (^)(NSData * data, NSURLResponse * response, NSError * error)) handler;
+{
+    NSMutableURLRequest *request = [self requestWithUrl:url parameters:parameters method:@"POST"];
+    NSURLSessionDataTask *task = [[self session] dataTaskWithRequest:request completionHandler:handler];
+    [task resume];
+}
+
+
+- (void)download:(NSString *) url saveAs:(NSString *) docPath progress:(DownloadProgress) progress completionHandler:(DownloadCompletion) handler
+{
+    NSAssert(nil != docPath, @"docPath not nil");
+
+    _docPath = docPath;
+    _downloadProgress = progress;
+    _downloadCompletion = handler;
+    
+    NSMutableURLRequest *request = [self requestWithUrl:url parameters:nil method:@"GET"];
+    
+    NSURLSessionConfiguration* sessionConfig = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:@"AppHttpClinet-download"];
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfig
+                                                          delegate:self
+                                                     delegateQueue:[NSOperationQueue mainQueue]];
+    
+    NSURLSessionDownloadTask *task = [session downloadTaskWithRequest:request];
+
+    [task resume];
+}
+
+- (NSURLSession *)session
+{
+    NSURLSessionConfiguration* sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfig
+                                                          delegate:nil
+                                                     delegateQueue:[NSOperationQueue mainQueue]];
+    return session;
+}
+
 /**
  * 暂时只支持GET、POST
  */
@@ -41,7 +86,7 @@ NSString * const KfileData = @"file_data";
         request.HTTPMethod = @"POST";
         
         if(parameters){
-
+            
             // 判断是有流参数
             BOOL isMultipart = NO;
             for (NSString *key in parameters) {
@@ -87,7 +132,7 @@ NSString * const KfileData = @"file_data";
                 [bodyData appendData:[[NSString stringWithFormat:@"%@--",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
                 [request setHTTPBody:bodyData];
                 
-
+                
             }else{
                 // 普通表单
                 NSString *bodyStr = @"";
@@ -125,45 +170,6 @@ NSString * const KfileData = @"file_data";
     [bodyData appendData:[field dataUsingEncoding:NSUTF8StringEncoding]];
     [bodyData appendData:filedata];
     [bodyData appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
-}
-
-- (void)get:(NSString *)url completionHandler:(void (^)(NSData * data, NSURLResponse * response, NSError * error)) handler;
-{
-    
-    NSMutableURLRequest *request = [self requestWithUrl:url parameters:nil method:@"GET"];
-    NSURLSession *session = [NSURLSession sharedSession];
-    NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:handler];
-    [task resume];
-}
-
-- (void)post:(NSString *)url parameters:(NSDictionary *)parameters completionHandler:(void (^)(NSData * data, NSURLResponse * response, NSError * error)) handler;
-{
-    NSMutableURLRequest *request = [self requestWithUrl:url parameters:parameters method:@"POST"];
-    NSURLSession *session = [NSURLSession sharedSession];
-    NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:handler];
-    
-    [task resume];
-}
-
-
-- (void)download:(NSString *) url saveAs:(NSString *) docPath progress:(DownloadProgress) progress completionHandler:(DownloadCompletion) handler
-{
-    NSAssert(nil != docPath, @"docPath not nil");
-
-    _docPath = docPath;
-    _downloadProgress = progress;
-    _downloadCompletion = handler;
-    
-    NSMutableURLRequest *request = [self requestWithUrl:url parameters:nil method:@"GET"];
-    
-    NSURLSessionConfiguration* sessionConfig = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:@"AppHttpClinet-download"];
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfig
-                                                          delegate:self
-                                                     delegateQueue:[NSOperationQueue mainQueue]];
-    
-    NSURLSessionDownloadTask *task = [session downloadTaskWithRequest:request];
-
-    [task resume];
 }
 
 
