@@ -26,7 +26,7 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     
-    _array = @[@"Method GET",@"Method POST",@"Upload",@"Uploads"];
+    _array = @[@"Method GET",@"Method POST",@"Upload",@"Uploads",@"Download"];
     
     _tableView = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, mScreenWidth, mScreenHeight)];
     [_tableView setDataSource:self];
@@ -102,7 +102,7 @@
             UIImage *image = [self grabScreenWithScale];
             NSData *data = UIImagePNGRepresentation(image);
             
-            NSDictionary *dict = @{@"amount":@"123",@"images":data};
+            NSDictionary *dict = @{@"amount":@"123",@"images":@{KfileName:@"截屏",KfileData:data}};
             
             NSString *api = @"http://192.168.1.8:8090/upload";
             [AppHttpClient post:api parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
@@ -120,7 +120,7 @@
             UIImage *image = [self grabScreenWithScale];
             NSData *data = UIImagePNGRepresentation(image);
             
-            NSDictionary *dict = @{@"amount":@"123",@"images":@[data,data]};
+            NSDictionary *dict = @{@"amount":@"123",@"images":@[@{KfileName:@"截屏1",KfileData:data},@{KfileName:@"截屏2",KfileData:data}]};
             
             NSString *api = @"http://192.168.1.8:8090/upload";
             [AppHttpClient post:api parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
@@ -132,6 +132,22 @@
                 }
             }];
             break;
+        }
+        case 4:
+        {
+            AppHttpClient *clinet = [[AppHttpClient alloc]init];
+            [clinet download:@"http://hbimg.b0.upaiyun.com/84194f2a3c400baea28c6e02e3a70c2918ad81d71327d-WBrvU5"
+                      saveAs:@"images/1.jpg"
+                    progress:^(double progress) {
+                        
+                    } completionHandler:^(NSError *error) {
+                        
+                        if(error){
+                            NSLog(@"%@",error);
+                        }else{
+                            NSLog(@"download success");
+                        }
+                    }];
         }
         default:
             break;

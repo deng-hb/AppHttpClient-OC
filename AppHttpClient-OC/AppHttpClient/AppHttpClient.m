@@ -8,25 +8,17 @@
 
 #import "AppHttpClient.h"
 
-@implementation AppHttpClient
+NSString * const KfileName = @"file_name";
+NSString * const KfileData = @"file_data";
 
-static AppHttpClient *_instance;
-
-- (instancetype)init {
-    @throw [NSException exceptionWithName:@"This is Singleton"
-                                   reason:@"[AppHttpClient xxxx]"
-                                 userInfo:nil];
-    return nil;
-}
-
-+ (instancetype)sharedInstance
+@interface AppHttpClient ()<NSURLSessionDownloadDelegate>
 {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _instance = [super init];
-    });
-    return _instance;
+    DownloadProgress _downloadProgress;
+    DownloadCompletion _downloadCompletion;
 }
+@end
+
+@implementation AppHttpClient
 
 + (NSURLSession *)urlSession
 {
@@ -67,7 +59,7 @@ static AppHttpClient *_instance;
             BOOL isMultipart = NO;
             for (NSString *key in parameters) {
                 id value = parameters[key];
-                if([value isKindOfClass:[NSData class]] || [value isKindOfClass:[NSArray class]]){
+                if([value isKindOfClass:[NSDictionary class]] || [value isKindOfClass:[NSArray class]]){
                     isMultipart = YES;
                     break;
                 }
@@ -87,26 +79,12 @@ static AppHttpClient *_instance;
                     if([value isKindOfClass:[NSArray class]]){
                         // 循环
                         NSArray *array = (NSArray *)value;
-                        for(NSData *data in array){
-                            NSString *field = boundary;
-                            field = [field stringByAppendingString:[NSString stringWithFormat:@"\r\nContent-Disposition: form-data; name=\"%@\"; filename=\"%@\"",key, key]];
-                            field = [field stringByAppendingString:[NSString stringWithFormat:@"\r\nContent-Type: application/octet-stream\r\nContent-Transfer-Encoding: binary\r\n\r\n"]];
-                            
-                            [bodyData appendData:[field dataUsingEncoding:NSUTF8StringEncoding]];
-                            [bodyData appendData:data];
-                            [bodyData appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+                        for(NSDictionary *dict in array){
+                            [self fileAppendWith:dict bodyData:bodyData boundary:boundary name:key];
                         }
                         
-                    }else if([value isKindOfClass:[NSData class]]){
-                        // 单个文件
-                        NSString *field = boundary;
-                        field = [field stringByAppendingString:[NSString stringWithFormat:@"\r\nContent-Disposition: form-data; name=\"%@\"; filename=\"%@\"",key, key]];
-                        field = [field stringByAppendingString:[NSString stringWithFormat:@"\r\nContent-Type: application/octet-stream\r\nContent-Transfer-Encoding: binary\r\n\r\n"]];
-                        
-                        [bodyData appendData:[field dataUsingEncoding:NSUTF8StringEncoding]];
-                        [bodyData appendData:(NSData *)value];
-                        [bodyData appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
-                        
+                    }else if([value isKindOfClass:[NSDictionary class]]){
+                        [self fileAppendWith:(NSDictionary *)value bodyData:bodyData boundary:boundary name:key];
                     }else{
                         // 普通文本
                         NSString *field = boundary;
@@ -141,6 +119,26 @@ static AppHttpClient *_instance;
     return request;
 }
 
+/**
+ * 文件流拼接
+ */
++ (void)fileAppendWith:(NSDictionary *)dict bodyData:(NSMutableData *) bodyData boundary:(NSString *) boundary name:(NSString *)name
+{
+    
+    NSData *filedata = dict[KfileData];
+    NSAssert(nil != filedata, @"file data not nil");
+    NSString *filename = dict[KfileName];
+    NSAssert(nil != filename, @"file name not nil");
+    
+    // 单个文件
+    NSString *field = boundary;
+    field = [field stringByAppendingString:[NSString stringWithFormat:@"\r\nContent-Disposition: form-data; name=\"%@\"; filename=\"%@\"",name, filename]];
+    field = [field stringByAppendingString:[NSString stringWithFormat:@"\r\nContent-Type: application/octet-stream\r\nContent-Transfer-Encoding: binary\r\n\r\n"]];
+    
+    [bodyData appendData:[field dataUsingEncoding:NSUTF8StringEncoding]];
+    [bodyData appendData:filedata];
+    [bodyData appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+}
 
 + (void)get:(NSString *)url completionHandler:(void (^)(NSData * data, NSURLResponse * response, NSError * error)) handler;
 {
@@ -160,4 +158,29 @@ static AppHttpClient *_instance;
     [task resume];
 }
 
+
+- (void)download:(NSString *) url saveAs:(NSString *) docPath progress:(DownloadProgress) progress completionHandler:(DownloadCompletion) handler
+{
+    _downloadProgress = progress;
+    _downloadCompletion = handler;
+    
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
+    __block NSURLSessionDownloadTask *task = [[NSURLSession sharedSession] downloadTaskWithRequest:request completionHandler:^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        
+        // 报错就返回
+        if(error){
+            handler(error);
+        }
+    }];
+    
+    [task resume];
+}
+
+
+#pragma mark - NSURLSessionDownloadDelegate
+
+- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location
+{
+    
+}
 @end
