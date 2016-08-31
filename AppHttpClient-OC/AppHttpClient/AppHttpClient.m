@@ -8,8 +8,9 @@
 
 #import "AppHttpClient.h"
 
-NSString * const KfileName = @"file_name";
-NSString * const KfileData = @"file_data";
+NSString * const kFileName = @"file_name";
+NSString * const kFileData = @"file_data";
+NSString * const kFilePath = @"file_path";
 
 @interface AppHttpClient ()<NSURLSessionDownloadDelegate>
 {
@@ -80,7 +81,7 @@ NSString * const KfileData = @"file_data";
     
     [request setValue:@"denghb" forHTTPHeaderField:@"User-Agent"];// TODO 可自定义
     [request setValue:@"denghb" forHTTPHeaderField:@"Xxx"];// TODO 可自定义
-    [request setValue:@"https://huaban.com/" forHTTPHeaderField:@"Referer"];
+
     // POST 请求
     if(method && [@"POST" isEqualToString:method]){
         request.HTTPMethod = @"POST";
@@ -157,18 +158,30 @@ NSString * const KfileData = @"file_data";
 - (void)fileAppendWith:(NSDictionary *)dict bodyData:(NSMutableData *) bodyData boundary:(NSString *) boundary name:(NSString *)name
 {
     
-    NSData *filedata = dict[KfileData];
-    NSAssert(nil != filedata, @"file data not nil");
-    NSString *filename = dict[KfileName];
-    NSAssert(nil != filename, @"file name not nil");
+    NSString *fileName = dict[kFileName];
+    NSData *fileData = dict[kFileData];
+    
+    // 文件绝对路径
+    if(nil == fileData){
+        NSString *filePath = dict[kFilePath];
+        fileData = [NSData dataWithContentsOfFile:filePath];
+        
+        if(nil == fileName){
+            fileName = [filePath lastPathComponent];
+        }
+    }
+    
+    NSAssert(nil != fileName, @"file name not nil");
+    NSAssert(nil != fileData, @"file data not nil");
+
     
     // 单个文件
     NSString *field = boundary;
-    field = [field stringByAppendingString:[NSString stringWithFormat:@"\r\nContent-Disposition: form-data; name=\"%@\"; filename=\"%@\"",name, filename]];
+    field = [field stringByAppendingString:[NSString stringWithFormat:@"\r\nContent-Disposition: form-data; name=\"%@\"; filename=\"%@\"",name, fileName]];
     field = [field stringByAppendingString:[NSString stringWithFormat:@"\r\nContent-Type: application/octet-stream\r\nContent-Transfer-Encoding: binary\r\n\r\n"]];
     
     [bodyData appendData:[field dataUsingEncoding:NSUTF8StringEncoding]];
-    [bodyData appendData:filedata];
+    [bodyData appendData:fileData];
     [bodyData appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
 }
 

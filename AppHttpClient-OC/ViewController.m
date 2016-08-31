@@ -16,6 +16,7 @@
 {
     UITableView *_tableView;
     NSArray *_array;
+    NSString *_serverAddress;
 }
 
 @end
@@ -28,12 +29,13 @@
     [self setTitle:@"Example"];
     _array = @[@"GET",@"POST",@"Upload",@"Uploads",@"Download"];
     
+    _serverAddress = @"http://192.168.1.10:8090";
+    
     _tableView = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, mScreenWidth, mScreenHeight)];
     [_tableView setDataSource:self];
     [_tableView setDelegate:self];
     [_tableView setBackgroundColor:[UIColor whiteColor]];
     [self.view addSubview:_tableView];
-    
     
 }
 
@@ -63,12 +65,14 @@
     NSLog(@"click %ld",(long)indexPath.row);
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 
+    NSString *doc = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+    
     __weak typeof(self) weakSelf = self;
     switch (indexPath.row) {
         case 0:
         {
             AppHttpClient *clinet = [[AppHttpClient alloc]init];
-            [clinet get:@"http://192.168.1.8:8090/" completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            [clinet get:[NSString stringWithFormat:@"%@/",_serverAddress] completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                 if(error){
                     [weakSelf setTitle:[NSString stringWithFormat:@"GET %@",error.localizedDescription]];
                     NSLog(@"%@",error);
@@ -99,9 +103,8 @@
             
             NSDictionary *dict = @{@"amount":@"123"};
             
-            NSString *api = @"http://192.168.1.8:8090/post";
             AppHttpClient *clinet = [[AppHttpClient alloc]init];
-            [clinet post:api parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            [clinet post:[NSString stringWithFormat:@"%@/post",_serverAddress] parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                 NSString *body = [[NSString alloc]initWithData:data encoding:(NSUTF8StringEncoding)];
                 NSLog(@"%@",body);
                 
@@ -119,11 +122,10 @@
             UIImage *image = [self grabScreenWithScale];
             NSData *data = UIImagePNGRepresentation(image);
             
-            NSDictionary *dict = @{@"amount":@"123",@"images":@{KfileName:@"截屏",KfileData:data}};
+            NSDictionary *dict = @{@"amount":@"123",@"images":@{kFileName:@"截屏",kFileData:data}};
             
-            NSString *api = @"http://192.168.1.8:8090/upload";
             AppHttpClient *clinet = [[AppHttpClient alloc]init];
-            [clinet post:api parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            [clinet post:[NSString stringWithFormat:@"%@/upload",_serverAddress] parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                 NSString *body = [[NSString alloc]initWithData:data encoding:(NSUTF8StringEncoding)];
                 NSLog(@"%@",body);
                 
@@ -141,11 +143,11 @@
             UIImage *image = [self grabScreenWithScale];
             NSData *data = UIImagePNGRepresentation(image);
             
-            NSDictionary *dict = @{@"amount":@"123",@"images":@[@{KfileName:@"截屏1",KfileData:data},@{KfileName:@"截屏2",KfileData:data}]};
+            NSDictionary *parameters = @{@"amount":@"123",@"images":@[@{kFileName:@"截屏1",kFileData:data},@{kFilePath:[NSString stringWithFormat:@"%@/images/1.png",doc]}]};
             
-            NSString *api = @"http://192.168.1.8:8090/upload";
             AppHttpClient *clinet = [[AppHttpClient alloc]init];
-            [clinet post:api parameters:dict completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            [clinet post:[NSString stringWithFormat:@"%@/upload",_serverAddress]
+              parameters:parameters completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                 NSString *body = [[NSString alloc]initWithData:data encoding:(NSUTF8StringEncoding)];
                 NSLog(@"%@",body);
                 
@@ -160,9 +162,10 @@
         }
         case 4:
         {
+            NSLog(@"%@",doc);
             AppHttpClient *clinet = [[AppHttpClient alloc]init];
-            [clinet download:@"http://hbimg.b0.upaiyun.com/84194f2a3c400baea28c6e02e3a70c2918ad81d71327d-WBrvU5"
-                      saveAs:@"images/1.jpg"
+            [clinet download:[NSString stringWithFormat:@"%@/assets/alipay.png",_serverAddress]
+                      saveAs:@"images/1.png"
                     progress:^(double progress) {
                         NSLog(@"%@",[NSString stringWithFormat:@"Download %.2f%%",progress]);
                     } completionHandler:^(NSError *error) {

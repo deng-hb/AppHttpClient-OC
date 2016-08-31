@@ -8,8 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
-extern NSString * const KfileName;
-extern NSString * const KfileData;
+extern NSString * const kFileName;
+extern NSString * const kFileData;
+extern NSString * const kFilePath;// 与以上二选一，默认data
 
 typedef void(^DownloadProgress)(double progress);
 
