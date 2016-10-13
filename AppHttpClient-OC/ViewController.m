@@ -29,7 +29,7 @@
     [self setTitle:@"Example"];
     _array = @[@"GET",@"POST",@"Upload",@"Uploads",@"Download"];
     
-    _serverAddress = @"http://192.168.1.10:8090";
+    _serverAddress = @"http://192.168.58.45:8090";
     
     _tableView = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, mScreenWidth, mScreenHeight)];
     [_tableView setDataSource:self];
@@ -164,7 +164,7 @@
         {
             NSLog(@"%@",doc);
             AppHttpClient *clinet = [[AppHttpClient alloc]init];
-            [clinet download:[NSString stringWithFormat:@"%@/assets/alipay.png",_serverAddress]
+            [clinet download:[NSString stringWithFormat:@"%@/download",_serverAddress]
                       saveAs:@"images/1.png"
                     progress:^(double progress) {
                         NSLog(@"%@",[NSString stringWithFormat:@"Download %.2f%%",progress]);

@@ -1,21 +1,31 @@
 {
-  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "805e9921-1861-4be1-b35a-8016b19cf6ff++4000",
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "21F48779969310D94E5AF47B26AD71D4BA6AFF83",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+    "21F48779969310D94E5AF47B26AD71D4BA6AFF83" : {
+
+    },
     "805e9921-1861-4be1-b35a-8016b19cf6ff++4000" : {
 
     }
   },
   "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
-    "805e9921-1861-4be1-b35a-8016b19cf6ff++4000" : 0
+    "21F48779969310D94E5AF47B26AD71D4BA6AFF83" : 9223372036854775807,
+    "805e9921-1861-4be1-b35a-8016b19cf6ff++4000" : 9223372036854775807
   },
-  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "320EA54C-D022-4E1D-9449-47D16173A3D5",
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "4A3A6FDF-2D92-4A84-BC65-5EE0B6EBF5FD",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
-    "805e9921-1861-4be1-b35a-8016b19cf6ff++4000" : "ios\/"
+    "21F48779969310D94E5AF47B26AD71D4BA6AFF83" : "AppHttpClient-OC\/",
+    "805e9921-1861-4be1-b35a-8016b19cf6ff++4000" : ""
   },
   "DVTSourceControlWorkspaceBlueprintNameKey" : "AppHttpClient-OC",
   "DVTSourceControlWorkspaceBlueprintVersion" : 204,
-  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "AppHttpClient-OC\/AppHttpClient-OC.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "AppHttpClient-OC.xcodeproj",
   "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/deng-hb\/AppHttpClient-OC.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "21F48779969310D94E5AF47B26AD71D4BA6AFF83"
+    },
     {
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "svn:\/\/114.215.138.93",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Subversion",
