@@ -5,7 +5,7 @@
 >#import "AppHttpClient.h"
 
 ### GET请求
-```
+```Objective-C
 AppHttpClient *clinet = [[AppHttpClient alloc]init];
 [clinet get:@"https://denghb.com/" completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
     NSString *body = [[NSString alloc]initWithData:data encoding:(NSUTF8StringEncoding)];
@@ -14,7 +14,7 @@ AppHttpClient *clinet = [[AppHttpClient alloc]init];
 ```
 
 ### POST请求
-```
+```Objective-C
 NSDictionary *dict = @{@"amount":@"123"};
 
 AppHttpClient *clinet = [[AppHttpClient alloc]init];
